@@ -11,7 +11,8 @@ const path = require('path')
  * '\' is the windows path seperator. Mac/Linux use '/'. So hardcoding '\' would break on other systme.
  * '\' in a script in JavaScript is a special escape character, so writing 'C:\Users...' can cause bugs 
  */
-const downloadsFolder = path.join('C:', 'Users', 'likho', 'Downloads');
+//dynamically get current user's home directory without exposing username
+const downloadsFolder = path.join(require('os').homedir(), 'Downloads');
 
 //3. Define sorting rules
 
@@ -43,8 +44,6 @@ const files = fs.readdirSync(downloadsFolder);
  */
 files.forEach(file => {
     const fileExt = path.extname(file).toLocaleLowerCase();
-
-    console.log(`File: ${file} | Ext: "${fileExt}"`);
     
     let destinationFolder = null;
 
@@ -59,25 +58,37 @@ files.forEach(file => {
         }
     }
 
-    //If a file doesn't match any folder in the folderMap, assign it to 'Others'
-    if(destinationFolder == null) {
-        destinationFolder = 'Others' ;
+    /**
+     * 'statSYnc' returns info about any file or folder
+     * At first i passed 'files' to the method but thats an entire array of all files.
+     * So i passed 'file' but stat sync needs the full patha to the file and not just the filename.
+     * So i join the filename with the entire file path to my downloads folder
+     */
+    const fileInfo = fs.statSync(path.join(downloadsFolder, file));
+
+    //'isFile()' checks if the item is a file or not, which will items that are false
+    if(fileInfo.isFile()){
+        
+        //If a file doesn't match any folder in the folderMap, assign it to 'Others'
+        if(destinationFolder == null) {
+            destinationFolder = 'Others' ;
+        }
+
+        //'destFolder' builds the full path to the subfolder
+        const destFolder = path.join(downloadsFolder, destinationFolder);
+
+        //'existSync' checks if that subfolder already exists
+        if(!fs.existsSync(destFolder)) {
+            //mkdir creates that subfolder if it doesn't exist yet
+            fs.mkdirSync(destFolder) ;
+        }
+
+        //'sourcePath' full path of where file currently is
+        const sourcePath = path.join(downloadsFolder, file);
+        //'destPath' full path of where we want file to go
+        const destPath = path.join(destFolder, file);
+
+        //'renameSync' is what actually moves the file
+        fs.renameSync(sourcePath, destPath);
     }
-
-    //'destFolder' builds the full path to the subfolder
-    const destFolder = path.join(downloadsFolder, destinationFolder);
-
-    //'existSync' checks if that subfolder already exists
-    if(!fs.existsSync(destFolder)) {
-        //mkdir creates that subfolder if it doesn't exist yet
-        fs.mkdirSync(destFolder) ;
-    }
-
-    //'sourcePath' full path of where file currently is
-    const sourcePath = path.join(downloadsFolder, file);
-    //'destPath' full path of where we want file to go
-    const destPath = path.join(destFolder, file);
-
-    //'renameSync' is what actually moves the file
-    fs.renameSync(sourcePath, destPath);
 });
