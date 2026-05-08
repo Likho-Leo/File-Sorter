@@ -37,6 +37,7 @@ const files = fs.readdirSync(downloadsFolder);
 
 //5. Loop through each file
 
+let count = 0;
 /**
  * 'forEach' loops through every file in the array
  * 'path.extname()' extracts the extention for the filename
@@ -68,7 +69,7 @@ files.forEach(file => {
 
     //'isFile()' checks if the item is a file or not, which will items that are false
     if(fileInfo.isFile()){
-        
+
         //If a file doesn't match any folder in the folderMap, assign it to 'Others'
         if(destinationFolder == null) {
             destinationFolder = 'Others' ;
@@ -90,5 +91,8 @@ files.forEach(file => {
 
         //'renameSync' is what actually moves the file
         fs.renameSync(sourcePath, destPath);
+        count++;
     }
 });
+
+console.log(`Sorting complete! Moved ${count} files.`);
