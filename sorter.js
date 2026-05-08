@@ -3,7 +3,9 @@
 //'fs' stands for file system and allows us to read, move, and delete files.
 const fs = require('fs');
 // 'path' helps us build and handle file paths correctly accross different OS's 
-const path = require('path')
+const path = require('path');
+
+const chokidar = require('chokidar');
 
 //2. Define folder path
 
@@ -48,6 +50,21 @@ files.forEach(file => sortFile(file));
 
 console.log(`Sorting complete! Moved ${count} files.`);
 
+// 'chokidar.watch()' watches Downloads folder
+const watcher = chokidar.watch(downloadsFolder, {
+    ignoreInitial: true,        //ignores files already present when the watcher starts
+    awaitWriteFinish: true,     // waits until a file is fully downloaded before sorting it.
+});
+
+//'.on('add')' fires when a new file appears
+watcher.on('add', (filePath) => {
+    const file = path.basename(filePath);       //extracts the filename from full path given by chokidar
+    console.log(`New file detected: ${file}`);
+    sortFile(file);
+});
+
+console.log("Watching Downloads folder for new files...");
+
 function sortFile(file) {
     const fileExt = path.extname(file).toLocaleLowerCase();
     let destinationFolder = null;
@@ -64,37 +81,48 @@ function sortFile(file) {
     }
 
     /**
-     * 'statSYnc' returns info about any file or folder
-     * At first i passed 'files' to the method but thats an entire array of all files.
-     * So i passed 'file' but stat sync needs the full patha to the file and not just the filename.
-     * So i join the filename with the entire file path to my downloads folder
+     * files were being detected twice.
+     * I got an error saying the file doesn't exist when statSync tries to read it because by the time the 2nd event fires, the file was already moved by the 1st one
+     * Try/Catch prevents the file from being detected twice
      */
-    const fileInfo = fs.statSync(path.join(downloadsFolder, file));
+   try{
+         /**
+         * 'statSYnc' returns info about any file or folder
+         * At first I passed 'files' to the method but thats an entire array of all files.
+         * So I passed 'file' but stat sync needs the full path to the file and not just the filename.
+         * So I join the filename with the entire file path to my downloads folder
+         */
+        const fileInfo = fs.statSync(path.join(downloadsFolder, file));
 
-    //'isFile()' checks if the item is a file or not, which will items that are false
-    if(fileInfo.isFile()){
+        //'isFile()' checks if the item is a file or not, which will items that are false
+        if(fileInfo.isFile()){
 
-        //If a file doesn't match any folder in the folderMap, assign it to 'Others'
-        if(destinationFolder == null) {
-            destinationFolder = 'Others' ;
+            //If a file doesn't match any folder in the folderMap, assign it to 'Others'
+            if(destinationFolder == null) {
+                destinationFolder = 'Others' ;
+            }
+
+            //'destFolder' builds the full path to the subfolder
+            const destFolder = path.join(downloadsFolder, destinationFolder);
+
+            //'existSync' checks if that subfolder already exists
+            if(!fs.existsSync(destFolder)) {
+                //mkdir creates that subfolder if it doesn't exist yet
+                fs.mkdirSync(destFolder) ;
+            }
+
+            //'sourcePath' full path of where file currently is
+            const sourcePath = path.join(downloadsFolder, file);
+            //'destPath' full path of where we want file to go
+            const destPath = path.join(destFolder, file);
+
+            //'renameSync' is what actually moves the file
+            fs.renameSync(sourcePath, destPath);
+            count++;
         }
+   }
 
-        //'destFolder' builds the full path to the subfolder
-        const destFolder = path.join(downloadsFolder, destinationFolder);
-
-        //'existSync' checks if that subfolder already exists
-        if(!fs.existsSync(destFolder)) {
-            //mkdir creates that subfolder if it doesn't exist yet
-            fs.mkdirSync(destFolder) ;
-        }
-
-        //'sourcePath' full path of where file currently is
-        const sourcePath = path.join(downloadsFolder, file);
-        //'destPath' full path of where we want file to go
-        const destPath = path.join(destFolder, file);
-
-        //'renameSync' is what actually moves the file
-        fs.renameSync(sourcePath, destPath);
-        count++;
-    }
+   catch{
+    console.log('File already moved, skipping...')
+   }
 }
