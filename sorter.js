@@ -37,15 +37,19 @@ const files = fs.readdirSync(downloadsFolder);
 
 //5. Loop through each file
 
-let count = 0;
 /**
  * 'forEach' loops through every file in the array
  * 'path.extname()' extracts the extention for the filename
  * '.toLowerCase()' makes it lowercase so '.MP3' and '.mp3' are treated the same.
  */
-files.forEach(file => {
+let count = 0;
+
+files.forEach(file => sortFile(file));
+
+console.log(`Sorting complete! Moved ${count} files.`);
+
+function sortFile(file) {
     const fileExt = path.extname(file).toLocaleLowerCase();
-    
     let destinationFolder = null;
 
     //loop through each key in folder map
@@ -93,6 +97,4 @@ files.forEach(file => {
         fs.renameSync(sourcePath, destPath);
         count++;
     }
-});
-
-console.log(`Sorting complete! Moved ${count} files.`);
+}
