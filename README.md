@@ -24,7 +24,7 @@ Scans your Downloads folder and moves files into the following subfolders:
 
 1. Clone the repository
    ```bash
-   git clone https://github.com/your-username/file-sorter.git
+   git clone https://github.com/Likho-Leo/file-sorter.git
    cd file-sorter
    ```
 
