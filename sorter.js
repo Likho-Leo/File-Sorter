@@ -1,0 +1,83 @@
+//1. import node tools for working with files
+
+//'fs' stands for file system and allows us to read, move, and delete files.
+const fs = require('fs');
+// 'path' helps us build and handle file paths correctly accross different OS's 
+const path = require('path')
+
+//2. Define folder path
+
+/**
+ * '\' is the windows path seperator. Mac/Linux use '/'. So hardcoding '\' would break on other systme.
+ * '\' in a script in JavaScript is a special escape character, so writing 'C:\Users...' can cause bugs 
+ */
+const downloadsFolder = path.join('C:', 'Users', 'likho', 'Downloads');
+
+//3. Define sorting rules
+
+//the script will look up the specific file type in the folder map and find it under the specific key/folder and store it there.
+const folderMap = {
+    Images: ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.svg'],
+    Videos: ['.mp4', '.mkv', '.mov', '.avi'],
+    Music: ['.mp3', '.wav', '.flac', '.aac'],
+    Documents: ['.pdf', '.docx', '.doc', '.txt', '.xlsx', '.pptx'],
+    Archives: ['.zip', '.rar', '.7z'],
+    Code: ['.js', '.html', '.css', '.json', '.py'],
+    Others: [],
+};
+
+//4. Read files in the Downloads folder
+
+/**
+ * 'readdir' reads all the files in a folder and returns them as an array of file names.
+ * 'Sync' means it waits until it's done reading before moving to the next line (we don't want to start sorting files before we've finished reading them)
+ */
+const files = fs.readdirSync(downloadsFolder);
+
+//5. Loop through each file
+
+/**
+ * 'forEach' loops through every file in the array
+ * 'path.extname()' extracts the extention for the filename
+ * '.toLowerCase()' makes it lowercase so '.MP3' and '.mp3' are treated the same.
+ */
+files.forEach(file => {
+    const fileExt = path.extname(file).toLocaleLowerCase();
+
+    console.log(`File: ${file} | Ext: "${fileExt}"`);
+    
+    let destinationFolder = null;
+
+    //loop through each key in folder map
+    for (const folder in folderMap) {
+
+        //'includes()' checks if the folder's extension array contains specified file ext
+        if(folderMap[folder].includes(fileExt)) {
+            //If it matches, save the folder name and break out of loop
+            destinationFolder = folder;
+            break;
+        }
+    }
+
+    //If a file doesn't match any folder in the folderMap, assign it to 'Others'
+    if(destinationFolder == null) {
+        destinationFolder = 'Others' ;
+    }
+
+    //'destFolder' builds the full path to the subfolder
+    const destFolder = path.join(downloadsFolder, destinationFolder);
+
+    //'existSync' checks if that subfolder already exists
+    if(!fs.existsSync(destFolder)) {
+        //mkdir creates that subfolder if it doesn't exist yet
+        fs.mkdirSync(destFolder) ;
+    }
+
+    //'sourcePath' full path of where file currently is
+    const sourcePath = path.join(downloadsFolder, file);
+    //'destPath' full path of where we want file to go
+    const destPath = path.join(destFolder, file);
+
+    //'renameSync' is what actually moves the file
+    fs.renameSync(sourcePath, destPath);
+});
