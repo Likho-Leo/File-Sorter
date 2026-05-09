@@ -48,8 +48,6 @@ let count = 0;
 
 files.forEach(file => sortFile(file));
 
-console.log(`Sorting complete! Moved ${count} files.`);
-
 // 'chokidar.watch()' watches Downloads folder
 const watcher = chokidar.watch(downloadsFolder, {
     ignoreInitial: true,        //ignores files already present when the watcher starts
@@ -62,8 +60,6 @@ watcher.on('add', (filePath) => {
     console.log(`New file detected: ${file}`);
     sortFile(file);
 });
-
-console.log("Watching Downloads folder for new files...");
 
 function sortFile(file) {
     const fileExt = path.extname(file).toLocaleLowerCase();
@@ -120,9 +116,12 @@ function sortFile(file) {
             fs.renameSync(sourcePath, destPath);
             count++;
         }
+        console.log(`Sorting complete! Moved ${count} files.`);
+        console.log("Watching Downloads folder for new files...");
    }
 
    catch{
     console.log('File already moved, skipping...')
    }
+
 }
