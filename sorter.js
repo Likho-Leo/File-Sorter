@@ -59,7 +59,12 @@ const watcher = chokidar.watch(downloadsFolder, {
 //'.on('add')' fires when a new file appears
 watcher.on('add', (filePath) => {
     const file = path.basename(filePath);       //extracts the filename from full path given by chokidar
-    const destination = sortFile(file);
+    const destination = sortFile(file);         //assign returned 'destinationFolder' from sortFile()
+    /**
+     * chokidar usually fires twice, and the second fire tries reading a non existent file.
+     * This resulted in logging the same file twice.
+     * I made the catch return a null and only log files if destination isn't null.
+     */
     if(destination != null){
         console.log(`New file detected: ${file}`);
         console.log(`File: ${file} was moved to ${destination}`);
@@ -124,7 +129,7 @@ function sortFile(file) {
             count++;
         }
 
-        return destinationFolder;
+        return destinationFolder;       //for logging destination folder in .watcher(). line 62
    }
 
    catch{
