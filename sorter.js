@@ -60,9 +60,10 @@ const watcher = chokidar.watch(downloadsFolder, {
 watcher.on('add', (filePath) => {
     const file = path.basename(filePath);       //extracts the filename from full path given by chokidar
     const destination = sortFile(file);
-    console.log(`New detected: ${file}`);
-    //sortFile(file);
-    console.log(`File: ${file} was moved to ${destination}`);
+    if(destination != null){
+        console.log(`New file detected: ${file}`);
+        console.log(`File: ${file} was moved to ${destination}`);
+    }
 });
 
 console.log("Watching Downloads folder for new files...");
@@ -128,5 +129,6 @@ function sortFile(file) {
 
    catch{
     console.log('File already moved, skipping...')
+    return null;
    }
 }
